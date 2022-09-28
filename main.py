@@ -1,6 +1,20 @@
+import json
 from tkinter import *
 from tkinter import messagebox
 import random
+
+# ---------------------------- FIND PASSWORD ------------------------------- #
+def find_password():
+    try:
+        with open("data.json", mode='r') as data_search:
+            the_data = json.load(data_search)
+            the_website = the_data[website_input.get()]
+    except FileNotFoundError:
+        messagebox.showinfo(title="Error", message="No data file found")
+    except KeyError:
+        messagebox.showinfo(title="Error", message="No details for the website exists")
+    else:
+        messagebox.showinfo(title=website_input.get(), message=f"The password is: {the_website['Password']}")
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 def generate_password():
@@ -31,6 +45,12 @@ def save():
     website = website_input.get()
     email = email_input.get()
     password = password_input.get()
+    new_data = {
+        website: {
+            "E-mail": email,
+            "Password": password
+        }
+    }
 
     if len(email) == 0 or len(password) == 0:
         messagebox.showinfo(title="Oops", message="Please don't leave any fields empty")
@@ -40,10 +60,19 @@ def save():
                                                                    f"Password: {password}\nDo you wanna save?")
 
         if is_ok:
-            with open("data.txt", mode='a') as data:
-                data.write(f"{website} | {email} | {password}\n")
-            website_input.delete(0, END)
-            password_input.delete(0, END)
+            try:
+                with open("data.json", mode='r') as data:
+                    my_data = json.load(data)
+                    my_data.update(new_data)
+            except FileNotFoundError:
+                with open("data.json", mode='w') as data:
+                    json.dump(new_data, data, indent=4)
+            else:
+                with open("data.json", mode='w') as data:
+                    json.dump(my_data, data, indent=4)
+            finally:
+                website_input.delete(0, END)
+                password_input.delete(0, END)
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -65,8 +94,8 @@ email_label.grid(column=0, row=2)
 password_label = Label(text="Password:")
 password_label.grid(column=0, row=3)
 
-website_input = Entry(width=35)
-website_input.grid(column=1, row=1, columnspan=2)
+website_input = Entry(width=27)
+website_input.grid(column=1, row=1)
 website_input.focus()
 
 email_input = Entry(width=35)
@@ -81,5 +110,8 @@ generate_button.grid(column=2, row=3)
 
 add_button = Button(text="Add", font=("Ariel", 8), width=37, command=save)
 add_button.grid(column=1, row=4, columnspan=2)
+
+search_button = Button(text="Search", font=("Ariel", 8), width=5, command=find_password)
+search_button.grid(column=2, row=1)
 
 window.mainloop()
